@@ -1,4 +1,11 @@
- # PowerShell Script to get device information
+# PowerShell Script to get device information and change execution policy
+
+# Change the execution policy to allow running scripts
+$executionPolicy = Get-ExecutionPolicy
+if ($executionPolicy -eq "Restricted") {
+    Set-ExecutionPolicy RemoteSigned -Force
+    Write-Host "Execution policy changed to RemoteSigned."
+}
 
 # Get Computer Name
 $computerName = $env:COMPUTERNAME
@@ -76,4 +83,3 @@ foreach ($drive in $hardDrives) {
     $driveSize = [math]::round($drive.Size / 1GB, 2)
     Write-Host "Drive: $driveLetter, Size: $driveSize GB"
 }
- 
