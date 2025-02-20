@@ -1,0 +1,79 @@
+ # PowerShell Script to get device information
+
+# Get Computer Name
+$computerName = $env:COMPUTERNAME
+
+# Get Operating System
+$os = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+
+# Get Serial Number (From BIOS)
+$serialNumber = (Get-WmiObject -Class Win32_BIOS).SerialNumber
+
+# Get OS Install Date
+$osInstallDate = (Get-CimInstance -ClassName Win32_OperatingSystem).InstallDate
+
+# Get Current User
+$currentUser = $env:USERNAME
+
+# Get Domain (If the computer is part of a domain)
+$domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
+
+# Get CPU Information
+$cpu = Get-WmiObject -Class Win32_Processor
+
+# Get Number of CPUs
+$cpuCount = $cpu.Count
+
+# Get CPU Details: Speed, Sockets, Cores, Logical Processors
+$cpuSpeed = [math]::round(($cpu[0].MaxClockSpeed) / 1000, 2)  # Convert MHz to GHz
+$cpuSockets = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfProcessors
+$cpuCores = $cpu | Measure-Object -Property NumberOfCores -Sum | Select-Object -ExpandProperty Sum
+$logicalProcessors = $cpu | Measure-Object -Property NumberOfLogicalProcessors -Sum | Select-Object -ExpandProperty Sum
+
+# Get Total Physical Memory (in GB)
+$memory = [math]::round((Get-CimInstance -ClassName Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
+
+# Get Memory Type
+$memoryType = (Get-WmiObject -Class Win32_PhysicalMemory)[0].MemoryType
+
+# Get Memory Slots and Form Factor
+$memoryModules = Get-WmiObject -Class Win32_PhysicalMemory
+$memorySlots = $memoryModules.Count
+$memoryFormFactor = $memoryModules[0].FormFactor
+
+# Get Hard Drive Information (Drive Letter and Size)
+$hardDrives = Get-WmiObject -Class Win32_LogicalDisk -Filter "DriveType=3"
+
+# Display all gathered information
+Write-Host "Computer Name: $computerName"
+Write-Host "Operating System: $os"
+Write-Host "Serial Number: $serialNumber"
+Write-Host "OS Install Date: $osInstallDate"
+Write-Host "Current User: $currentUser"
+Write-Host "Domain: $domain"
+Write-Host "Number of CPUs: $cpuCount"
+Write-Host "CPU Speed: $cpuSpeed GHz"
+Write-Host "CPU Sockets: $cpuSockets"
+Write-Host "CPU Cores: $cpuCores"
+Write-Host "Logical Processors: $logicalProcessors"
+Write-Host "Total Memory (GB): $memory GB"
+Write-Host "Memory Type: $memoryType"
+Write-Host "Number of Memory Slots: $memorySlots"
+Write-Host "Memory Form Factor: $memoryFormFactor"
+
+# Display Memory Module Information
+Write-Host "Memory Modules:"
+foreach ($module in $memoryModules) {
+    $slot = $module.DeviceLocator
+    $size = [math]::round($module.Capacity / 1GB, 2)
+    Write-Host "Slot: $slot, Size: $size GB"
+}
+
+# Display Hard Drive Information
+Write-Host "Hard Drives:"
+foreach ($drive in $hardDrives) {
+    $driveLetter = $drive.DeviceID
+    $driveSize = [math]::round($drive.Size / 1GB, 2)
+    Write-Host "Drive: $driveLetter, Size: $driveSize GB"
+}
+ 
